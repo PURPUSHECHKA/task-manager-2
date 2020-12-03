@@ -1,6 +1,3 @@
-// Вверху страницы - должны быть четыре кнопки Всё/ День/ Неделя/ Месяц, которые переходят на
-// соотвествующие роуты /:category /:category/day /:category/week /:category/month.
-// При переходе на эти роуты данные запрашиваются с соответствующих роутов(/api/v1/tasks/:category/:timespan)
 
 import React, { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
@@ -9,6 +6,8 @@ import Head from './head'
 import { getTasks, getTasksForTimespan } from '../redux/reducers/tasks'
 import Task from './common/task'
 import NewTask from './common/newTask'
+
+
 
 const TaskList = () => {
   const dispatch = useDispatch()
@@ -22,6 +21,7 @@ const TaskList = () => {
       <Head title="TaskList" />
       <div className="flex items-center justify-center h-screen">
         <div className="bg-indigo-800 text-white font-bold rounded-lg border shadow-lg p-10">
+
           <button
             className="border rounded bg-blue-700 m-2"
             type="button"
@@ -54,6 +54,7 @@ const TaskList = () => {
             <Task category={category} taskData={item} key={item.taskId} />
           ))}
           <NewTask category={category} />
+
         </div>
       </div>
     </div>

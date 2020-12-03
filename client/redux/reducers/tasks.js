@@ -7,6 +7,7 @@ const ADD_TASK = 'ADD_TASK'
 const CHANGE_TITLE = 'CHANGE_TITLE'
 const GET_TASKS_FOR_TIMESPAN = 'GET_TASKS_FOR_TIMESPAN'
 
+
 const initialState = {
   listOfTasks: []
 }
@@ -31,6 +32,7 @@ export default (state = initialState, action) => {
     case GET_TASKS_FOR_TIMESPAN: {
       return { ...state, listOfTasks: action.data }
     }
+
     default:
       return state
   }
@@ -38,9 +40,11 @@ export default (state = initialState, action) => {
 
 export function getTasks(category) {
   return (dispatch) => {
+
     axios(`/api/v1/tasks/${category}`).then(({ data }) => {
       dispatch({ type: GET_TASKS, listOfTasks: data })
     })
+
   }
 }
 
@@ -48,13 +52,16 @@ export function updateSmth() {
   return { type: UPDATE_SMTH, new: 'blabla' }
 }
 
+
 export function changeStatus(category, id, status) {
   return (dispatch, getState) => {
     const store = getState()
     const { listOfTasks } = store.tasks
+
     const changedStatus = listOfTasks.map((item) =>
       item.taskId === id ? { ...item, status } : item
     )
+
     dispatch({ type: CHANGE_STATUS, changedStatus })
     axios({
       method: 'patch',
@@ -65,6 +72,7 @@ export function changeStatus(category, id, status) {
     })
   }
 }
+
 
 export function addTask(category, title) {
   return (dispatch) => {
@@ -101,3 +109,4 @@ export function getTasksForTimespan(category, timespan) {
     })
   }
 }
+

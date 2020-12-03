@@ -1,3 +1,4 @@
+
 {
   "name": "boilerplate-skillcrucial",
   "version": "0.0.2",
@@ -166,7 +167,7 @@
     "ignore": [
       "*.hot-update.json",
       "client",
-      "server/tasks/*"
+      "server/tasks/*.*"
     ]
   },
   "husky": {

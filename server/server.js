@@ -104,7 +104,9 @@ server.get('/api/v1/tasks/:category', async (req, res) => {
   const data = await toReadFile(category)
     .then((file) => removeSpecialFields(file))
     .catch(() => {
+
       res.status(404)
+
       res.end()
     })
   res.json(data)
@@ -141,10 +143,12 @@ server.get('/api/v1/tasks/:category/:timespan', async (req, res) => {
 
 server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
   const { category, id } = req.params
+
   let { status, title } = req.body
   const statusArray = ['done', 'new', 'in progress', 'blocked']
   const check = statusArray.includes(status)
   if (status && !check) {
+
     res.status(501)
     res.json({ status: 'error', message: 'incorrect status' })
     res.end()
@@ -152,6 +156,7 @@ server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
   const data = await toReadFile(category)
     .then((file) => {
       return file.map((task) => {
+
         if (task.taskId !== id) {
           return task
         }
@@ -162,6 +167,7 @@ server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
           title = task.title
         }
         return { ...task, status, title }
+
       })
     })
     .catch(() => {
@@ -195,7 +201,7 @@ server.use('/api/', (req, res) => {
 
 const [htmlStart, htmlEnd] = Html({
   body: 'separator',
-  title: 'Skillcrucial - Become an IT HERO'
+  title: 'Just Task Manager'
 }).split('separator')
 
 server.get('/', (req, res) => {

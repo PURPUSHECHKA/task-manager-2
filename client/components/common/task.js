@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { changeStatus, changeTitle } from '../../redux/reducers/tasks'
@@ -58,6 +59,7 @@ const Task = (props) => {
           {blocked}
         </button>
       )}
+
     </div>
   )
 }
