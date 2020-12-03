@@ -30,17 +30,36 @@ try {
 }
 
 const template = {
-  taskId: '', // -  nanoid(),
-  title: '', // имя таска
-  _isDeleted: false, // флаг удален ли таск. Физичически мы таски не удаляем, только помечаем что удален
-  _createdAt: 0, // время в секундах от 1,1,1970 до момента создания таска, // read utc format ( +new Date() )
-  _deletedAt: 0, // время в секундах от 1,1,1970 до момента удаление таска или null, // read utc format ( +new Date() )
-  status: 'new' // ['done', 'new', 'in progress', 'blocked'] - может быть только эти значения и никакие больше
+  taskId: '',
+  title: '',
+  _isDeleted: false,
+  _createdAt: 0,
+  _deletedAt: 0,
+  status: 'new'
 }
 
 const toWriteFile = (fileData, category) => {
   const text = JSON.stringify(fileData)
   writeFile(`${__dirname}/tasks/${category}.json`, text, { encoding: 'utf8' })
+}
+
+const toReadFile = (category) => {
+  return readFile(`${__dirname}/tasks/${category}.json`, { encoding: 'utf8' }).then((file) =>
+    JSON.parse(file)
+  )
+}
+
+const removeSpecialFields = (tasks) => {
+  return tasks
+    .filter((task) => !task._isDeleted)
+    .map((obj) => {
+      return Object.keys(obj).reduce((acc, key) => {
+        if (key[0] !== '_') {
+          return { ...acc, [key]: obj[key] }
+        }
+        return acc
+      }, {})
+    })
 }
 
 let connections = []
@@ -67,9 +86,9 @@ server.post('/api/v1/tasks/:category', async (req, res) => {
     title,
     _createdAt: +new Date()
   }
-  const taskList = await readFile(`${__dirname}/tasks/${category}.json`, { encoding: 'utf8' })
+  const taskList = await toReadFile(category)
     .then((file) => {
-      const list = [...JSON.parse(file), newTask]
+      const list = [...file, newTask]
       toWriteFile(list, category)
       return list
     })
@@ -80,27 +99,92 @@ server.post('/api/v1/tasks/:category', async (req, res) => {
   res.json(taskList)
 })
 
-// GET /api/v1/tasks/:category - получает все массив из фаила тасков и именем `../tasks/${category}.json`,
-// без полей, которые начинаются с нижнего подчеркивания кроме тасков с _isDeleted: true
-
 server.get('/api/v1/tasks/:category', async (req, res) => {
   const { category } = req.params
-  const data = await readFile(`${__dirname}/tasks/${category}.json`, { encoding: 'utf8' })
+  const data = await toReadFile(category)
+    .then((file) => removeSpecialFields(file))
+    .catch(() => {
+      res.status(404)
+      res.end()
+    })
+  res.json(data)
+})
+
+server.get('/api/v1/tasks/:category/:timespan', async (req, res) => {
+  const { category, timespan } = req.params
+  const time = {
+    day: 86400000,
+    week: 604800000,
+    month: 2592000000
+  }
+
+  const keys = Object.keys(time)
+  const index = keys.indexOf(timespan)
+  if (index < 0) {
+    res.status(404)
+    res.end()
+  }
+
+  const data = await toReadFile(category)
+    .then((file) => {
+      return file.filter((task) => {
+        return task._createdAt + time[timespan] > +new Date()
+      })
+    })
+    .then((file) => removeSpecialFields(file))
+    .catch(() => {
+      res.status(404)
+      res.end()
+    })
+  res.json(data)
+})
+
+server.patch('/api/v1/tasks/:category/:id', async (req, res) => {
+  const { category, id } = req.params
+  let { status, title } = req.body
+  const statusArray = ['done', 'new', 'in progress', 'blocked']
+  const check = statusArray.includes(status)
+  if (status && !check) {
+    res.status(501)
+    res.json({ status: 'error', message: 'incorrect status' })
+    res.end()
+  }
+  const data = await toReadFile(category)
+    .then((file) => {
+      return file.map((task) => {
+        if (task.taskId !== id) {
+          return task
+        }
+        if (status === undefined) {
+          status = task.status
+        }
+        if (title === undefined) {
+          title = task.title
+        }
+        return { ...task, status, title }
+      })
+    })
+    .catch(() => {
+      res.status(404)
+      res.end()
+    })
+  toWriteFile(data, category)
+  res.json(data)
+})
+
+server.delete('/api/v1/tasks/:category/:id', async (req, res) => {
+  const { category, id } = req.params
+  const data = await toReadFile(category)
     .then((file) =>
-      JSON.parse(file)
-        .filter((task) => !task._isDeleted)
-        .map((obj) => {
-          return Object.keys(obj).reduce((acc, key) => {
-            if (key[0] !== '_') {
-              return { ...acc, [key]: obj[key] }
-            }
-            return acc
-          }, {})
-        })
+      file.map((task) => {
+        return task.taskId !== id ? task : { ...task, _isDeleted: true, _deletedAt: +new Date() }
+      })
     )
     .catch(() => {
-      return ['No category']
+      res.status(404)
+      res.end()
     })
+  toWriteFile(data, category)
   res.json(data)
 })
 
