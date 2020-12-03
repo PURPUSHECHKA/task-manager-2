@@ -1,10 +1,22 @@
-import React from 'react'
+
+import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { changeStatus } from '../../redux/reducers/tasks'
+import { changeStatus, changeTitle } from '../../redux/reducers/tasks'
 
 const Task = (props) => {
   const { taskData, category } = props
+  const [isEditingMode, setEditing] = useState(false)
+  const [newTitle, setNewTitle] = useState(taskData.title)
   const dispatch = useDispatch()
+  const onTitleChange = (e) => {
+    setNewTitle(e.target.value)
+  }
+  const onEditSaveClick = () => {
+    if (isEditingMode) {
+      dispatch(changeTitle(category, taskData.taskId, newTitle))
+    }
+    setEditing(!isEditingMode)
+  }
   let status
   switch (taskData.status) {
     case 'in progress':
@@ -16,13 +28,38 @@ const Task = (props) => {
       status = 'in progress'
   }
   const blocked = taskData.status === 'blocked' ? 'in progress' : 'blocked'
-
+  const edit = isEditingMode ? 'Save' : 'Edit'
   return (
-    <div>
-      <div>{taskData.title}</div>
-      <div>{taskData.status}</div>
-      <button type="button" className="border rounded" onClick={() => dispatch(changeStatus(category, taskData.taskId, status))}>{status}</button>
-      {(taskData.status === 'in progress' || taskData.status === 'blocked') && <button type="button" className="border rounded" onClick={() => dispatch(changeStatus(category, taskData.taskId, blocked))}>{blocked}</button>}
+    <div className="border-2 border-indigo-600">
+      <button type="button" className="border rounded bg-teal-500" onClick={onEditSaveClick}>
+        {edit}
+      </button>
+      {!isEditingMode && (
+        <>
+          <div>{taskData.title}</div>
+          <div>{taskData.status}</div>
+        </>
+      )}
+      {isEditingMode && (
+        <input className="text-black" type="text" value={newTitle} onChange={onTitleChange} />
+      )}
+      <button
+        type="button"
+        className="border rounded bg-teal-500"
+        onClick={() => dispatch(changeStatus(category, taskData.taskId, status))}
+      >
+        {status}
+      </button>
+      {(taskData.status === 'in progress' || taskData.status === 'blocked') && (
+        <button
+          type="button"
+          className="border rounded mx-2 bg-teal-500"
+          onClick={() => dispatch(changeStatus(category, taskData.taskId, blocked))}
+        >
+          {blocked}
+        </button>
+      )}
+
     </div>
   )
 }
